@@ -36,6 +36,14 @@
         .brand-title { font-size: 20px; font-weight: 800; color: #1a73e8; margin: 0; text-transform: uppercase; }
         .brand-sub { font-size: 12px; color: #666; margin: 2px 0 10px 0; }
         
+        /* AUTO CYCLE ALERT BOX */
+        .alert-box {
+            background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107;
+            padding: 12px; border-radius: 8px; margin-bottom: 12px;
+        }
+        .alert-title { font-size: 13px; font-weight: bold; color: #856404; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .alert-item { background: #fff; border: 1px solid #ffe8a1; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
+
         .top-btns { display: flex; gap: 8px; margin-bottom: 12px; }
         .btn-orange { background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-red { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
@@ -95,6 +103,8 @@
                 <button type="button" onclick="closeProfile()" style="background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
             </div>
             
+            <p style="font-size:13px; margin: 4px 0 12px 0; color:#555;">🚀 <b>Tuition Join Date:</b> <span id="profJoinDate" style="color:#1a73e8; font-weight:bold;">-</span></p>
+
             <div class="stat-grid" style="margin-bottom:12px;">
                 <div class="stat-box" style="border-left-color:#2e7d32;">
                     <div class="stat-label">Total Paid (जमा)</div>
@@ -142,14 +152,28 @@
             </div>
         </div>
 
+        <!-- CYCLE DATE ALERTS (AUTO DISPLAYED AT TOP) -->
+        <div id="cycleAlertContainer" class="alert-box" style="display:none;">
+            <div class="alert-title">⏰ Month Started Alerts (इन बच्चों का महीना चालू हो गया है):</div>
+            <div id="cycleAlertList"></div>
+        </div>
+
         <!-- ENTRY TAB -->
         <div id="entryTab" class="tab-content active">
             <div class="card">
                 <div class="card-title">➕ New Fee Entry</div>
                 
                 <form id="studentForm">
-                    <label>Student Name (छात्र का नाम)</label>
-                    <input type="text" id="stdName" placeholder="उदा. राहुल कुमार" required>
+                    <div class="grid-2">
+                        <div>
+                            <label>Student Name (छात्र का नाम)</label>
+                            <input type="text" id="stdName" placeholder="उदा. राहुल कुमार" required>
+                        </div>
+                        <div>
+                            <label>Tuition Start Date (ट्यूशन कब चालू किया)</label>
+                            <input type="date" id="joinDate" required>
+                        </div>
+                    </div>
 
                     <div class="grid-2">
                         <div>
@@ -211,6 +235,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Join Date</th>
                                 <th>Month</th>
                                 <th>Cycle Date</th>
                                 <th>Fee (₹)</th>
@@ -263,6 +288,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Join Date</th>
                                 <th>Month</th>
                                 <th>Cycle Date</th>
                                 <th>Fee</th>
@@ -312,10 +338,11 @@
         }
 
         // Data Handling
-        let records = JSON.parse(localStorage.getItem('nb_records_v3')) || [];
+        let records = JSON.parse(localStorage.getItem('nb_records_v4')) || [];
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('paidDate').value = today;
+        document.getElementById('joinDate').value = today;
 
         function togglePaidDate() {
             const status = document.getElementById('stdStatus').value;
@@ -328,9 +355,10 @@
         }
 
         function saveAndRender() {
-            localStorage.setItem('nb_records_v3', JSON.stringify(records));
+            localStorage.setItem('nb_records_v4', JSON.stringify(records));
             renderRecords();
             updateDashboard();
+            checkCycleAlerts();
         }
 
         function switchTab(tabId, element) {
@@ -346,8 +374,9 @@
             const newRecord = {
                 id: Date.now(),
                 name: document.getElementById('stdName').value.trim(),
+                joinDate: document.getElementById('joinDate').value || '-',
                 month: document.getElementById('feeMonth').value,
-                cycleDate: document.getElementById('cycleDate').value,
+                cycleDate: Number(document.getElementById('cycleDate').value),
                 fee: Number(document.getElementById('stdFee').value),
                 status: status,
                 paidDate: status === 'Paid' ? (document.getElementById('paidDate').value || '-') : 'Pending / Unpaid'
@@ -357,6 +386,7 @@
             saveAndRender();
             e.target.reset();
             document.getElementById('paidDate').value = today;
+            document.getElementById('joinDate').value = today;
             togglePaidDate();
             alert("Entry Saved Successfully!");
         });
@@ -368,8 +398,8 @@
             reportTbody.innerHTML = '';
 
             if(records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
-                reportTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
+                reportTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
                 return;
             }
 
@@ -387,6 +417,7 @@
                 const row = `
                     <tr>
                         <td><b>${r.name}</b></td>
+                        <td>${r.joinDate || '-'}</td>
                         <td>${r.month}</td>
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
@@ -400,6 +431,7 @@
                 reportTbody.innerHTML += `
                     <tr>
                         <td><b>${r.name}</b></td>
+                        <td>${r.joinDate || '-'}</td>
                         <td>${r.month}</td>
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
@@ -425,11 +457,35 @@
             }
         }
 
+        function checkCycleAlerts() {
+            const currentDay = new Date().getDate();
+            const alertBox = document.getElementById('cycleAlertContainer');
+            const alertList = document.getElementById('cycleAlertList');
+            alertList.innerHTML = '';
+
+            const alertItems = records.filter(r => r.status === 'Due' && currentDay >= r.cycleDate);
+
+            if(alertItems.length > 0) {
+                alertBox.style.display = 'block';
+                alertItems.forEach(item => {
+                    alertList.innerHTML += `
+                        <div class="alert-item">
+                            <span><b>${item.name}</b> - cycle date: <b>${item.cycleDate}th</b> (${item.month})</span>
+                            <span style="color:#dc3545; font-weight:bold;">₹${item.fee} Due</span>
+                        </div>
+                    `;
+                });
+            } else {
+                alertBox.style.display = 'none';
+            }
+        }
+
         function openProfile(studentName) {
             const studentRecords = records.filter(r => r.name.toLowerCase() === studentName.toLowerCase());
             if(studentRecords.length === 0) return;
 
             document.getElementById('profName').innerText = `👤 ${studentName}`;
+            document.getElementById('profJoinDate').innerText = studentRecords[0].joinDate || 'N/A';
             
             let paidSum = 0;
             let dueSum = 0;
