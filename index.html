@@ -36,13 +36,13 @@
         .brand-title { font-size: 20px; font-weight: 800; color: #1a73e8; margin: 0; text-transform: uppercase; }
         .brand-sub { font-size: 12px; color: #666; margin: 2px 0 10px 0; }
         
-        /* AUTO CYCLE ALERT BOX */
+        /* MULTI-MONTH ALERT BOX */
         .alert-box {
             background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107;
             padding: 12px; border-radius: 8px; margin-bottom: 12px;
         }
         .alert-title { font-size: 13px; font-weight: bold; color: #856404; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-        .alert-item { background: #fff; border: 1px solid #ffe8a1; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .alert-item { background: #fff; border: 1px solid #ffe8a1; padding: 10px; border-radius: 6px; font-size: 13px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
 
         .top-btns { display: flex; gap: 8px; margin-bottom: 12px; }
         .btn-orange { background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
@@ -79,7 +79,7 @@
         .badge-due { background: #f8d7da; color: #721c24; }
         .badge-partial { background: #fff3cd; color: #856404; }
         
-        .unpaid-tag { background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px; }
+        .unpaid-tag { background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 4px; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -107,7 +107,7 @@
             </div>
             
             <p style="font-size:13px; margin: 4px 0 6px 0; color:#555;">🚀 <b>Tuition Join Date:</b> <span id="profJoinDate" style="color:#1a73e8; font-weight:bold;">-</span></p>
-            <p style="font-size:13px; margin: 0 0 12px 0; color:#dc3545;">⚠️ <b>Pending Months:</b> <span id="profPendingMonths" style="font-weight:bold;">None</span></p>
+            <p style="font-size:13px; margin: 0 0 12px 0; color:#dc3545;">⚠️ <b>Pending Details:</b> <span id="profPendingMonths" style="font-weight:bold;">None</span></p>
 
             <div class="stat-grid" style="margin-bottom:12px;">
                 <div class="stat-box" style="border-left-color:#2e7d32;">
@@ -115,7 +115,7 @@
                     <div class="stat-value" style="color:#2e7d32;" id="profPaid">₹0</div>
                 </div>
                 <div class="stat-box" style="border-left-color:#dc3545;">
-                    <div class="stat-label">Total Due (बकाया)</div>
+                    <div class="stat-label">Total Due (कुल बकाया)</div>
                     <div class="stat-value" style="color:#dc3545;" id="profDue">₹0</div>
                 </div>
             </div>
@@ -159,7 +159,7 @@
 
         <!-- MULTI-MONTH UNPAID ALERTS -->
         <div id="cycleAlertContainer" class="alert-box" style="display:none;">
-            <div class="alert-title">🚨 Unpaid / Pending Fee Alerts (बकाया फ़ीस की जानकारी):</div>
+            <div class="alert-title">⏰ Pending Fee Alerts (इन बच्चों का फ़ीस बकाया है):</div>
             <div id="cycleAlertList"></div>
         </div>
 
@@ -172,7 +172,7 @@
                     <div class="grid-2">
                         <div>
                             <label>Student Name (छात्र का नाम)</label>
-                            <input type="text" id="stdName" placeholder="उदा. राहुल कुमार" required>
+                            <input type="text" id="stdName" placeholder="उदा. सुहानी खातून" required>
                         </div>
                         <div>
                             <label>Tuition Start Date (ट्यूशन कब चालू किया)</label>
@@ -182,7 +182,7 @@
 
                     <div class="grid-2">
                         <div>
-                            <label>Select Month (महीना चुनिए)</label>
+                            <label>Starting Month (किस महीने से)</label>
                             <select id="feeMonth" required>
                                 <option value="January">January (जनवरी)</option>
                                 <option value="February">February (फ़रवरी)</option>
@@ -200,33 +200,51 @@
                         </div>
                         <div>
                             <label>Billing Cycle Date (महीना कब लगता है)</label>
-                            <input type="number" id="cycleDate" min="1" max="31" placeholder="उदा. 1st ya 5th tarikh" required>
+                            <input type="number" id="cycleDate" min="1" max="31" placeholder="उदा. 4 या 5 तारीख" required>
                         </div>
                     </div>
 
                     <div class="grid-2">
                         <div>
-                            <label>Total Fee (कुल मासिक फ़ीस ₹)</label>
-                            <input type="number" id="stdFee" placeholder="उदा. 500" required oninput="calculatePartial()">
+                            <label>Monthly Fee (एक महीने की फ़ीस ₹)</label>
+                            <input type="number" id="stdFee" placeholder="उदा. 200" required oninput="recalculateDueTotal()">
                         </div>
                         <div>
                             <label>Status (Paid / Partial / Due)</label>
                             <select id="stdStatus" onchange="togglePaymentFields()">
                                 <option value="Paid" selected>Paid (पूरा जमा)</option>
-                                <option value="Partial">Partial (आधा / कुछ जमा)</option>
+                                <option value="Partial">Partial (कुछ जमा)</option>
                                 <option value="Due">Due (पूरा बकाया)</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- MULTI-MONTH UNPAID OPTIONS -->
+                    <div class="grid-2" id="unpaidMonthsBox" style="display:none; background:#fff3cd; padding:8px; border-radius:6px; border:1px solid #ffeeba; margin-top:8px;">
+                        <div>
+                            <label style="color:#856404;">कितने महीने का फ़ीस बकाया है?</label>
+                            <select id="unpaidMonthCount" onchange="recalculateDueTotal()">
+                                <option value="1">1 Month</option>
+                                <option value="2">2 Months (2 महीने)</option>
+                                <option value="3">3 Months (3 महीने)</option>
+                                <option value="4">4 Months (4 महीने)</option>
+                                <option value="5">5 Months (5 महीने)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color:#856404;">कुल बकाया फ़ीस (Calculated)</label>
+                            <input type="text" id="calculatedTotalDueDisplay" readonly style="font-weight:bold; color:#dc3545; background:#fff;">
                         </div>
                     </div>
 
                     <div class="grid-2" id="partialBox" style="display:none;">
                         <div>
                             <label>Paid Amount (कितना जमा किया ₹)</label>
-                            <input type="number" id="paidAmount" placeholder="उदा. 300" oninput="calculatePartial()">
+                            <input type="number" id="paidAmount" placeholder="उदा. 100" oninput="recalculateDueTotal()">
                         </div>
                         <div>
-                            <label>Remaining Due (बाकी कितना बचा ₹)</label>
-                            <input type="number" id="remainingDue" placeholder="0" readonly style="background:#e9ecef;">
+                            <label>Remaining Due (बाकी बचा ₹)</label>
+                            <input type="number" id="remainingDue" placeholder="0" readonly style="background:#e9ecef; font-weight:bold; color:#dc3545;">
                         </div>
                     </div>
 
@@ -358,9 +376,9 @@
 
         // --- AUTOMATIC DATA RECOVERY LOGIC ---
         function loadSavedRecords() {
-            let data = localStorage.getItem('nb_records_v5');
+            let data = localStorage.getItem('nb_records_v6');
             if (!data) {
-                const oldKeys = ['nb_records_v4', 'nb_records_v3', 'nb_records_v2', 'nb_records_v1', 'nb_records'];
+                const oldKeys = ['nb_records_v5', 'nb_records_v4', 'nb_records_v3', 'nb_records_v2', 'nb_records'];
                 for (let key of oldKeys) {
                     const oldData = localStorage.getItem(key);
                     if (oldData) {
@@ -380,6 +398,8 @@
 
         let records = loadSavedRecords();
 
+        const monthNamesList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('paidDate').value = today;
         document.getElementById('joinDate').value = today;
@@ -388,29 +408,41 @@
             const status = document.getElementById('stdStatus').value;
             const paidDateBox = document.getElementById('paidDateBox');
             const partialBox = document.getElementById('partialBox');
+            const unpaidMonthsBox = document.getElementById('unpaidMonthsBox');
 
             if (status === 'Due') {
                 paidDateBox.style.display = 'none';
                 partialBox.style.display = 'none';
+                unpaidMonthsBox.style.display = 'grid';
             } else if (status === 'Partial') {
                 paidDateBox.style.display = 'block';
                 partialBox.style.display = 'grid';
-                calculatePartial();
+                unpaidMonthsBox.style.display = 'grid';
             } else {
                 paidDateBox.style.display = 'block';
                 partialBox.style.display = 'none';
+                unpaidMonthsBox.style.display = 'none';
+            }
+            recalculateDueTotal();
+        }
+
+        function recalculateDueTotal() {
+            const status = document.getElementById('stdStatus').value;
+            const monthlyFee = Number(document.getElementById('stdFee').value) || 0;
+            const count = Number(document.getElementById('unpaidMonthCount').value) || 1;
+            
+            const totalCalculated = monthlyFee * count;
+            document.getElementById('calculatedTotalDueDisplay').value = `₹${totalCalculated} (${count} Months)`;
+
+            if(status === 'Partial') {
+                const paid = Number(document.getElementById('paidAmount').value) || 0;
+                const rem = totalCalculated - paid;
+                document.getElementById('remainingDue').value = rem > 0 ? rem : 0;
             }
         }
 
-        function calculatePartial() {
-            const totalFee = Number(document.getElementById('stdFee').value) || 0;
-            const paid = Number(document.getElementById('paidAmount').value) || 0;
-            const rem = totalFee - paid;
-            document.getElementById('remainingDue').value = rem > 0 ? rem : 0;
-        }
-
         function saveAndRender() {
-            localStorage.setItem('nb_records_v5', JSON.stringify(records));
+            localStorage.setItem('nb_records_v6', JSON.stringify(records));
             renderRecords();
             updateDashboard();
             checkCycleAlerts();
@@ -426,41 +458,56 @@
         document.getElementById('studentForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const status = document.getElementById('stdStatus').value;
-            const totalFee = Number(document.getElementById('stdFee').value);
-            let paidAmt = 0;
-            let dueAmt = 0;
+            const monthlyFee = Number(document.getElementById('stdFee').value);
+            const startMonth = document.getElementById('feeMonth').value;
+            const monthCount = (status === 'Due' || status === 'Partial') ? Number(document.getElementById('unpaidMonthCount').value) : 1;
+            
+            let startIdx = monthNamesList.indexOf(startMonth);
 
-            if(status === 'Paid') {
-                paidAmt = totalFee;
-                dueAmt = 0;
-            } else if(status === 'Due') {
-                paidAmt = 0;
-                dueAmt = totalFee;
-            } else if(status === 'Partial') {
-                paidAmt = Number(document.getElementById('paidAmount').value) || 0;
-                dueAmt = totalFee - paidAmt;
+            for(let i = 0; i < monthCount; i++) {
+                let currentMonth = monthNamesList[(startIdx + i) % 12];
+                let paidAmt = 0;
+                let dueAmt = 0;
+
+                if(status === 'Paid') {
+                    paidAmt = monthlyFee;
+                    dueAmt = 0;
+                } else if(status === 'Due') {
+                    paidAmt = 0;
+                    dueAmt = monthlyFee;
+                } else if(status === 'Partial') {
+                    // Split partial payment across months
+                    if(i === 0) {
+                        paidAmt = Number(document.getElementById('paidAmount').value) || 0;
+                        dueAmt = monthlyFee - paidAmt;
+                    } else {
+                        paidAmt = 0;
+                        dueAmt = monthlyFee;
+                    }
+                }
+
+                const newRecord = {
+                    id: Date.now() + i,
+                    name: document.getElementById('stdName').value.trim(),
+                    joinDate: document.getElementById('joinDate').value || '-',
+                    month: currentMonth,
+                    cycleDate: Number(document.getElementById('cycleDate').value),
+                    fee: monthlyFee,
+                    paidAmount: paidAmt,
+                    remainingDue: dueAmt > 0 ? dueAmt : 0,
+                    status: (dueAmt <= 0) ? 'Paid' : (paidAmt > 0 ? 'Partial' : 'Due'),
+                    paidDate: status !== 'Due' ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
+                };
+
+                records.push(newRecord);
             }
 
-            const newRecord = {
-                id: Date.now(),
-                name: document.getElementById('stdName').value.trim(),
-                joinDate: document.getElementById('joinDate').value || '-',
-                month: document.getElementById('feeMonth').value,
-                cycleDate: Number(document.getElementById('cycleDate').value),
-                fee: totalFee,
-                paidAmount: paidAmt,
-                remainingDue: dueAmt,
-                status: status,
-                paidDate: status !== 'Due' ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
-            };
-
-            records.push(newRecord);
             saveAndRender();
             e.target.reset();
             document.getElementById('paidDate').value = today;
             document.getElementById('joinDate').value = today;
             togglePaymentFields();
-            alert("Entry Saved Successfully!");
+            alert(`${monthCount} महीने का एंट्री सफलतापूर्वक सेव हो गया!`);
         });
 
         function renderRecords() {
@@ -522,7 +569,7 @@
             const currentRec = records[index];
             const recDue = currentRec.remainingDue || currentRec.fee;
             
-            const actionType = prompt(`छात्र: ${currentRec.name}\nकुल बाकी: ₹${recDue}\n\n1 = पूरा जमा (Paid)\n2 = और कुछ जमा (Partial Amount)`, "1");
+            const actionType = prompt(`छात्र: ${currentRec.name}\nमहीना: ${currentRec.month}\nकुल बाकी: ₹${recDue}\n\n1 = पूरा जमा (Paid)\n2 = और कुछ जमा (Partial Amount)`, "1");
 
             if(actionType === "1") {
                 const customDate = prompt("पैसा जमा होने की तारीख दर्ज करें:", today);
@@ -558,26 +605,27 @@
             }
         }
 
-        // --- MULTI-MONTH UNPAID / DUE TRACKING SYSTEM ---
+        // --- MULTI-MONTH COMBINED UNPAID ALERT SYSTEM ---
         function checkCycleAlerts() {
             const alertBox = document.getElementById('cycleAlertContainer');
             const alertList = document.getElementById('cycleAlertList');
             alertList.innerHTML = '';
 
-            // Grouping unpaid records by student
             const studentMap = {};
 
             records.forEach(r => {
                 if (r.status === 'Due' || r.status === 'Partial') {
-                    if (!studentMap[r.name.toLowerCase()]) {
-                        studentMap[r.name.toLowerCase()] = {
+                    const key = r.name.toLowerCase().trim();
+                    if (!studentMap[key]) {
+                        studentMap[key] = {
                             name: r.name,
+                            cycleDate: r.cycleDate || '-',
                             months: [],
                             totalDue: 0
                         };
                     }
-                    studentMap[r.name.toLowerCase()].months.push(r.month);
-                    studentMap[r.name.toLowerCase()].totalDue += (r.remainingDue || r.fee);
+                    studentMap[key].months.push(r.month);
+                    studentMap[key].totalDue += (r.remainingDue || r.fee);
                 }
             });
 
@@ -593,11 +641,11 @@
                     alertList.innerHTML += `
                         <div class="alert-item">
                             <span>
-                                <b>${st.name}</b> 
+                                <b>${st.name}</b> <span style="font-size:11px; color:#666;">(Cycle: ${st.cycleDate}th)</span>
                                 <span class="unpaid-tag">${monthCount} Month Pending</span>
-                                <div style="color:#666; font-size:11px; margin-top:2px;">Pending Months: <b>${monthListStr}</b></div>
+                                <div style="color:#555; font-size:11px; margin-top:3px;">Pending Months: <b>${monthListStr}</b></div>
                             </span>
-                            <span style="color:#dc3545; font-weight:bold; font-size:13px;">Total Due: ₹${st.totalDue}</span>
+                            <span style="color:#dc3545; font-weight:bold; font-size:14px;">Total Due: ₹${st.totalDue}</span>
                         </div>
                     `;
                 });
@@ -607,7 +655,7 @@
         }
 
         function openProfile(studentName) {
-            const studentRecords = records.filter(r => r.name.toLowerCase() === studentName.toLowerCase());
+            const studentRecords = records.filter(r => r.name.toLowerCase().trim() === studentName.toLowerCase().trim());
             if(studentRecords.length === 0) return;
 
             document.getElementById('profName').innerText = `👤 ${studentName}`;
@@ -648,7 +696,8 @@
             document.getElementById('profDue').innerText = `₹${dueSum}`;
             
             if (pendingMonths.length > 0) {
-                document.getElementById('profPendingMonths').innerText = `${pendingMonths.length} Month Pending [${pendingMonths.join(', ')}]`;
+                document.getElementById('profPendingMonths').innerText = `${pendingMonths.length} Month(s) Pending [${pendingMonths.join(', ')}]`;
+                document.getElementById('profPendingMonths').style.color = '#dc3545';
             } else {
                 document.getElementById('profPendingMonths').innerText = 'All Clear ✅';
                 document.getElementById('profPendingMonths').style.color = '#2e7d32';
