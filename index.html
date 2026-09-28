@@ -82,7 +82,7 @@
             <h2 style="color:#1a73e8; margin-top:0;">🔒 Admin Security</h2>
             <p style="font-size:12px; color:#666;">एक्सेस करने के लिए पासवर्ड डालें</p>
             <input type="password" id="loginPassword" placeholder="Enter Password" style="margin-bottom: 15px;">
-            <button class="btn-submit" style="margin-top:0;" onclick="checkLogin()">Login</button>
+            <button type="button" class="btn-submit" style="margin-top:0;" onclick="checkLogin()">Login</button>
             <p style="font-size:11px; color:#888; margin-top:12px;">Default Password: <b>1234</b></p>
         </div>
     </div>
@@ -92,7 +92,7 @@
         <div class="profile-card">
             <div class="card-title" style="margin-bottom:8px;">
                 <span id="profName">👤 Student Profile</span>
-                <button onclick="closeProfile()" style="background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
+                <button type="button" onclick="closeProfile()" style="background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
             </div>
             
             <div class="stat-grid" style="margin-bottom:12px;">
@@ -131,14 +131,14 @@
             <div class="brand-sub">Fee Management System</div>
             
             <div class="top-btns">
-                <button class="btn-orange" onclick="changePassword()">🔑 Change Password</button>
-                <button class="btn-red" onclick="logout()">🔒 Logout</button>
+                <button type="button" class="btn-orange" onclick="changePassword()">🔑 Change Password</button>
+                <button type="button" class="btn-red" onclick="logout()">🔒 Logout</button>
             </div>
 
             <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('entryTab', this)">➕ Entry / Record</button>
-                <button class="tab-btn" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>
-                <button class="tab-btn" onclick="switchTab('reportTab', this)">📄 Report</button>
+                <button type="button" class="tab-btn active" onclick="switchTab('entryTab', this)">➕ Entry / Record</button>
+                <button type="button" class="tab-btn" onclick="switchTab('dashboardTab', this)">📊 Dashboard</button>
+                <button type="button" class="tab-btn" onclick="switchTab('reportTab', this)">📄 Report</button>
             </div>
         </div>
 
@@ -204,7 +204,7 @@
                 
                 <input type="text" id="searchInput" onkeyup="filterRecords()" placeholder="छात्र का नाम या महीना खोजें...">
                 
-                <button class="btn-excel" onclick="exportToExcel()">📊 Download Excel File</button>
+                <button type="button" class="btn-excel" onclick="exportToExcel()">📊 Download Excel File</button>
 
                 <div style="overflow-x:auto; margin-top:10px;">
                     <table>
@@ -256,7 +256,7 @@
             <div class="card">
                 <div class="card-title">
                     <span>📄 फ़ीस रिपोर्ट</span>
-                    <button style="float:right; padding:4px 8px;" onclick="window.print()">🖨️ Print</button>
+                    <button type="button" style="float:right; padding:4px 8px;" onclick="window.print()">🖨️ Print</button>
                 </div>
                 <div style="overflow-x:auto;">
                     <table>
@@ -287,7 +287,7 @@
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('loginPassword').value = '';
             } else {
-                alert("गलत पासवर्ड! सही पासवर्ड डालें।");
+                alert("गलत पासवर्ड! सही पासवर्ड डालें। (Default: 1234)");
             }
         }
 
@@ -376,13 +376,13 @@
             records.forEach((r, index) => {
                 const badgeClass = r.status === 'Paid' ? 'badge-paid' : 'badge-due';
                 
-                let actionBtn = `<button class="btn-profile" onclick="openProfile('${r.name.replace(/'/g, "\\'")}')">👤 Profile</button> `;
+                let actionBtn = `<button type="button" class="btn-profile" onclick="openProfile('${r.name.replace(/'/g, "\\'")}')">👤 Profile</button> `;
                 
                 if(r.status === 'Due') {
-                    actionBtn += `<button class="btn-paid" onclick="markAsPaid(${index})">✓ Paid</button> `;
+                    actionBtn += `<button type="button" class="btn-paid" onclick="markAsPaid(${index})">✓ Paid</button> `;
                 }
 
-                actionBtn += `<button style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="deleteRecord(${index})">X</button>`;
+                actionBtn += `<button type="button" style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="deleteRecord(${index})">X</button>`;
 
                 const row = `
                     <tr>
@@ -403,11 +403,4 @@
                         <td>${r.month}</td>
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
-                        <td><span class="badge ${badgeClass}">${r.status}</span></td>
-                        <td>${r.paidDate}</td>
-                    </tr>
-                `;
-            });
-        }
-
-    
+                     
