@@ -29,7 +29,7 @@
         }
         .profile-card {
             background: white; padding: 20px; border-radius: 12px; width: 92%;
-            max-width: 520px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            max-width: 540px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
 
         .header-card { background: #fff; padding: 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
@@ -42,7 +42,7 @@
             padding: 12px; border-radius: 8px; margin-bottom: 12px;
         }
         .alert-title { font-size: 13px; font-weight: bold; color: #856404; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-        .alert-item { background: #fff; border: 1px solid #ffe8a1; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .alert-item { background: #fff; border: 1px solid #ffe8a1; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
 
         .top-btns { display: flex; gap: 8px; margin-bottom: 12px; }
         .btn-orange { background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
@@ -79,6 +79,8 @@
         .badge-due { background: #f8d7da; color: #721c24; }
         .badge-partial { background: #fff3cd; color: #856404; }
         
+        .unpaid-tag { background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px; }
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
     </style>
@@ -104,7 +106,8 @@
                 <button type="button" onclick="closeProfile()" style="background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
             </div>
             
-            <p style="font-size:13px; margin: 4px 0 12px 0; color:#555;">🚀 <b>Tuition Join Date:</b> <span id="profJoinDate" style="color:#1a73e8; font-weight:bold;">-</span></p>
+            <p style="font-size:13px; margin: 4px 0 6px 0; color:#555;">🚀 <b>Tuition Join Date:</b> <span id="profJoinDate" style="color:#1a73e8; font-weight:bold;">-</span></p>
+            <p style="font-size:13px; margin: 0 0 12px 0; color:#dc3545;">⚠️ <b>Pending Months:</b> <span id="profPendingMonths" style="font-weight:bold;">None</span></p>
 
             <div class="stat-grid" style="margin-bottom:12px;">
                 <div class="stat-box" style="border-left-color:#2e7d32;">
@@ -117,7 +120,7 @@
                 </div>
             </div>
 
-            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Payment History & Partial Balance</h4>
+            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Payment History</h4>
             <div style="overflow-x:auto;">
                 <table>
                     <thead>
@@ -154,9 +157,9 @@
             </div>
         </div>
 
-        <!-- CYCLE DATE ALERTS (AUTO DISPLAYED AT TOP) -->
+        <!-- MULTI-MONTH UNPAID ALERTS -->
         <div id="cycleAlertContainer" class="alert-box" style="display:none;">
-            <div class="alert-title">⏰ Month Started / Due Alerts (इन बच्चों की फ़ीस बकाया है):</div>
+            <div class="alert-title">🚨 Unpaid / Pending Fee Alerts (बकाया फ़ीस की जानकारी):</div>
             <div id="cycleAlertList"></div>
         </div>
 
@@ -353,11 +356,9 @@
             }
         }
 
-        // --- AUTOMATIC DATA RECOVERY / MIGRATION LOGIC ---
+        // --- AUTOMATIC DATA RECOVERY LOGIC ---
         function loadSavedRecords() {
             let data = localStorage.getItem('nb_records_v5');
-            
-            // Agar naye key me data na mile, to purani sabhi keys se recover karo
             if (!data) {
                 const oldKeys = ['nb_records_v4', 'nb_records_v3', 'nb_records_v2', 'nb_records_v1', 'nb_records'];
                 for (let key of oldKeys) {
@@ -370,15 +371,9 @@
             }
 
             let parsedRecords = data ? JSON.parse(data) : [];
-
-            // Purane records ko naye format (Partial Payment fields) ke sath update karo
             return parsedRecords.map(r => {
-                if (r.paidAmount === undefined) {
-                    r.paidAmount = r.status === 'Paid' ? r.fee : 0;
-                }
-                if (r.remainingDue === undefined) {
-                    r.remainingDue = r.status === 'Due' ? r.fee : (r.fee - r.paidAmount);
-                }
+                if (r.paidAmount === undefined) r.paidAmount = r.status === 'Paid' ? r.fee : 0;
+                if (r.remainingDue === undefined) r.remainingDue = r.status === 'Due' ? r.fee : (r.fee - r.paidAmount);
                 return r;
             });
         }
@@ -563,22 +558,46 @@
             }
         }
 
+        // --- MULTI-MONTH UNPAID / DUE TRACKING SYSTEM ---
         function checkCycleAlerts() {
-            const currentDay = new Date().getDate();
             const alertBox = document.getElementById('cycleAlertContainer');
             const alertList = document.getElementById('cycleAlertList');
             alertList.innerHTML = '';
 
-            const alertItems = records.filter(r => (r.status === 'Due' || r.status === 'Partial') && currentDay >= r.cycleDate);
+            // Grouping unpaid records by student
+            const studentMap = {};
 
-            if(alertItems.length > 0) {
+            records.forEach(r => {
+                if (r.status === 'Due' || r.status === 'Partial') {
+                    if (!studentMap[r.name.toLowerCase()]) {
+                        studentMap[r.name.toLowerCase()] = {
+                            name: r.name,
+                            months: [],
+                            totalDue: 0
+                        };
+                    }
+                    studentMap[r.name.toLowerCase()].months.push(r.month);
+                    studentMap[r.name.toLowerCase()].totalDue += (r.remainingDue || r.fee);
+                }
+            });
+
+            const studentKeys = Object.keys(studentMap);
+
+            if(studentKeys.length > 0) {
                 alertBox.style.display = 'block';
-                alertItems.forEach(item => {
-                    const dueAmt = item.remainingDue || item.fee;
+                studentKeys.forEach(key => {
+                    const st = studentMap[key];
+                    const monthCount = st.months.length;
+                    const monthListStr = st.months.join(', ');
+                    
                     alertList.innerHTML += `
                         <div class="alert-item">
-                            <span><b>${item.name}</b> - Cycle: <b>${item.cycleDate}th</b> (${item.month}) [Status: ${item.status}]</span>
-                            <span style="color:#dc3545; font-weight:bold;">₹${dueAmt} Remaining Due</span>
+                            <span>
+                                <b>${st.name}</b> 
+                                <span class="unpaid-tag">${monthCount} Month Pending</span>
+                                <div style="color:#666; font-size:11px; margin-top:2px;">Pending Months: <b>${monthListStr}</b></div>
+                            </span>
+                            <span style="color:#dc3545; font-weight:bold; font-size:13px;">Total Due: ₹${st.totalDue}</span>
                         </div>
                     `;
                 });
@@ -596,12 +615,18 @@
             
             let paidSum = 0;
             let dueSum = 0;
+            let pendingMonths = [];
+
             const historyTbody = document.getElementById('profHistoryTbody');
             historyTbody.innerHTML = '';
 
             studentRecords.forEach(r => {
                 paidSum += (r.paidAmount || 0);
                 dueSum += (r.remainingDue || 0);
+
+                if (r.status === 'Due' || r.status === 'Partial') {
+                    pendingMonths.push(`${r.month} (₹${r.remainingDue})`);
+                }
 
                 let badgeClass = 'badge-paid';
                 if(r.status === 'Due') badgeClass = 'badge-due';
@@ -621,6 +646,14 @@
 
             document.getElementById('profPaid').innerText = `₹${paidSum}`;
             document.getElementById('profDue').innerText = `₹${dueSum}`;
+            
+            if (pendingMonths.length > 0) {
+                document.getElementById('profPendingMonths').innerText = `${pendingMonths.length} Month Pending [${pendingMonths.join(', ')}]`;
+            } else {
+                document.getElementById('profPendingMonths').innerText = 'All Clear ✅';
+                document.getElementById('profPendingMonths').style.color = '#2e7d32';
+            }
+
             document.getElementById('profileModal').style.display = 'flex';
         }
 
