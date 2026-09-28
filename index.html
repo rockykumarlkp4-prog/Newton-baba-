@@ -21,6 +21,17 @@
             max-width: 360px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
+        /* PROFILE MODAL */
+        #profileModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center;
+            align-items: center; z-index: 999;
+        }
+        .profile-card {
+            background: white; padding: 20px; border-radius: 12px; width: 92%;
+            max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
         .header-card { background: #fff; padding: 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
         .brand-title { font-size: 20px; font-weight: 800; color: #1a73e8; margin: 0; text-transform: uppercase; }
         .brand-sub { font-size: 12px; color: #666; margin: 2px 0 10px 0; }
@@ -34,7 +45,7 @@
         .tab-btn.active { background: #1a73e8; color: white; border-color: #1a73e8; }
 
         .card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .card-title { font-size: 16px; font-weight: bold; color: #1a73e8; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+        .card-title { font-size: 16px; font-weight: bold; color: #1a73e8; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
@@ -43,6 +54,8 @@
         
         .btn-submit { background: #1a73e8; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; width: 100%; margin-top: 15px; }
         .btn-excel { background: #2e7d32; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-paid { background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
+        .btn-profile { background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
 
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .stat-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 4px solid #1a73e8; }
@@ -71,6 +84,43 @@
             <input type="password" id="loginPassword" placeholder="Enter Password" style="margin-bottom: 15px;">
             <button class="btn-submit" style="margin-top:0;" onclick="checkLogin()">Login</button>
             <p style="font-size:11px; color:#888; margin-top:12px;">Default Password: <b>1234</b></p>
+        </div>
+    </div>
+
+    <!-- STUDENT PROFILE POPUP MODAL -->
+    <div id="profileModal">
+        <div class="profile-card">
+            <div class="card-title" style="margin-bottom:8px;">
+                <span id="profName">👤 Student Profile</span>
+                <button onclick="closeProfile()" style="background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
+            </div>
+            
+            <div class="stat-grid" style="margin-bottom:12px;">
+                <div class="stat-box" style="border-left-color:#2e7d32;">
+                    <div class="stat-label">Total Paid (जमा)</div>
+                    <div class="stat-value" style="color:#2e7d32;" id="profPaid">₹0</div>
+                </div>
+                <div class="stat-box" style="border-left-color:#dc3545;">
+                    <div class="stat-label">Total Due (बकाया)</div>
+                    <div class="stat-value" style="color:#dc3545;" id="profDue">₹0</div>
+                </div>
+            </div>
+
+            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Month-Wise Payment History</h4>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Cycle</th>
+                            <th>Fee</th>
+                            <th>Status</th>
+                            <th>Paid Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="profHistoryTbody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -325,6 +375,15 @@
 
             records.forEach((r, index) => {
                 const badgeClass = r.status === 'Paid' ? 'badge-paid' : 'badge-due';
+                
+                let actionBtn = `<button class="btn-profile" onclick="openProfile('${r.name.replace(/'/g, "\\'")}')">👤 Profile</button> `;
+                
+                if(r.status === 'Due') {
+                    actionBtn += `<button class="btn-paid" onclick="markAsPaid(${index})">✓ Paid</button> `;
+                }
+
+                actionBtn += `<button style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="deleteRecord(${index})">X</button>`;
+
                 const row = `
                     <tr>
                         <td><b>${r.name}</b></td>
@@ -333,7 +392,7 @@
                         <td>₹${r.fee}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
                         <td>${r.paidDate}</td>
-                        <td><button style="background:red; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="deleteRecord(${index})">X</button></td>
+                        <td style="white-space:nowrap;">${actionBtn}</td>
                     </tr>
                 `;
                 tbody.innerHTML += row;
@@ -351,49 +410,4 @@
             });
         }
 
-        function deleteRecord(index) {
-            if(confirm("हटाने की पुष्टि करें?")) {
-                records.splice(index, 1);
-                saveAndRender();
-            }
-        }
-
-        function filterRecords() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('#recordsTbody tr');
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
-            });
-        }
-
-        function updateDashboard() {
-            let totalFees = 0;
-            let paidFees = 0;
-            let dueFees = 0;
-
-            records.forEach(r => {
-                totalFees += r.fee;
-                if(r.status === 'Paid') paidFees += r.fee;
-                else dueFees += r.fee;
-            });
-
-            document.getElementById('dashTotalStudents').innerText = records.length;
-            document.getElementById('dashTotalFees').innerText = `₹${totalFees}`;
-            document.getElementById('dashPaidFees').innerText = `₹${paidFees}`;
-            document.getElementById('dashDueFees').innerText = `₹${dueFees}`;
-        }
-
-        function exportToExcel() {
-            if(records.length === 0) return alert("डाउनलोड करने के लिए कोई डेटा नहीं है!");
-            const worksheet = XLSX.utils.json_to_sheet(records);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Fee Records");
-            XLSX.writeFile(workbook, "Fee_Management_Report.xlsx");
-        }
-
-        // Init
-        saveAndRender();
-    </script>
-</body>
-</html>
+    
