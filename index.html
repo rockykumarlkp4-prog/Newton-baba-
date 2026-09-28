@@ -320,7 +320,7 @@
     </div>
 
     <script>
-        // Security Password Handling
+        // Password Security
         let appPassword = localStorage.getItem('nb_app_pass') || '1234';
 
         function checkLogin() {
@@ -353,8 +353,37 @@
             }
         }
 
-        // Data Handling
-        let records = JSON.parse(localStorage.getItem('nb_records_v5')) || [];
+        // --- AUTOMATIC DATA RECOVERY / MIGRATION LOGIC ---
+        function loadSavedRecords() {
+            let data = localStorage.getItem('nb_records_v5');
+            
+            // Agar naye key me data na mile, to purani sabhi keys se recover karo
+            if (!data) {
+                const oldKeys = ['nb_records_v4', 'nb_records_v3', 'nb_records_v2', 'nb_records_v1', 'nb_records'];
+                for (let key of oldKeys) {
+                    const oldData = localStorage.getItem(key);
+                    if (oldData) {
+                        data = oldData;
+                        break;
+                    }
+                }
+            }
+
+            let parsedRecords = data ? JSON.parse(data) : [];
+
+            // Purane records ko naye format (Partial Payment fields) ke sath update karo
+            return parsedRecords.map(r => {
+                if (r.paidAmount === undefined) {
+                    r.paidAmount = r.status === 'Paid' ? r.fee : 0;
+                }
+                if (r.remainingDue === undefined) {
+                    r.remainingDue = r.status === 'Due' ? r.fee : (r.fee - r.paidAmount);
+                }
+                return r;
+            });
+        }
+
+        let records = loadSavedRecords();
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('paidDate').value = today;
@@ -633,7 +662,7 @@
             XLSX.writeFile(workbook, "Fee_Management_Report.xlsx");
         }
 
-        // Init
+        // Init & Render
         saveAndRender();
     </script>
 </body>
