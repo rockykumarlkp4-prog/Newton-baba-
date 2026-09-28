@@ -29,7 +29,7 @@
         }
         .profile-card {
             background: white; padding: 20px; border-radius: 12px; width: 92%;
-            max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            max-width: 520px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
 
         .header-card { background: #fff; padding: 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
@@ -77,6 +77,7 @@
         .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-paid { background: #d4edda; color: #155724; }
         .badge-due { background: #f8d7da; color: #721c24; }
+        .badge-partial { background: #fff3cd; color: #856404; }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -116,14 +117,15 @@
                 </div>
             </div>
 
-            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Month-Wise Payment History & Paid Dates</h4>
+            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Payment History & Partial Balance</h4>
             <div style="overflow-x:auto;">
                 <table>
                     <thead>
                         <tr>
                             <th>Month</th>
-                            <th>Cycle</th>
-                            <th>Fee</th>
+                            <th>Total Fee</th>
+                            <th>Paid Amount</th>
+                            <th>Remaining Due</th>
                             <th>Status</th>
                             <th>Payment Date</th>
                         </tr>
@@ -154,7 +156,7 @@
 
         <!-- CYCLE DATE ALERTS (AUTO DISPLAYED AT TOP) -->
         <div id="cycleAlertContainer" class="alert-box" style="display:none;">
-            <div class="alert-title">⏰ Month Started Alerts (इन बच्चों का महीना चालू हो गया है):</div>
+            <div class="alert-title">⏰ Month Started / Due Alerts (इन बच्चों की फ़ीस बकाया है):</div>
             <div id="cycleAlertList"></div>
         </div>
 
@@ -201,20 +203,32 @@
 
                     <div class="grid-2">
                         <div>
-                            <label>Monthly Fee (मासिक फ़ीस ₹)</label>
-                            <input type="number" id="stdFee" placeholder="उदा. 500" required>
+                            <label>Total Fee (कुल मासिक फ़ीस ₹)</label>
+                            <input type="number" id="stdFee" placeholder="उदा. 500" required oninput="calculatePartial()">
                         </div>
                         <div>
-                            <label>Status (Paid / Due)</label>
-                            <select id="stdStatus" onchange="togglePaidDate()">
-                                <option value="Paid" selected>Paid (जमा)</option>
-                                <option value="Due">Due (बकाया)</option>
+                            <label>Status (Paid / Partial / Due)</label>
+                            <select id="stdStatus" onchange="togglePaymentFields()">
+                                <option value="Paid" selected>Paid (पूरा जमा)</option>
+                                <option value="Partial">Partial (आधा / कुछ जमा)</option>
+                                <option value="Due">Due (पूरा बकाया)</option>
                             </select>
                         </div>
                     </div>
 
+                    <div class="grid-2" id="partialBox" style="display:none;">
+                        <div>
+                            <label>Paid Amount (कितना जमा किया ₹)</label>
+                            <input type="number" id="paidAmount" placeholder="उदा. 300" oninput="calculatePartial()">
+                        </div>
+                        <div>
+                            <label>Remaining Due (बाकी कितना बचा ₹)</label>
+                            <input type="number" id="remainingDue" placeholder="0" readonly style="background:#e9ecef;">
+                        </div>
+                    </div>
+
                     <div id="paidDateBox">
-                        <label>Payment Date (पैसा किस तारीख को जमा हुआ)</label>
+                        <label>Payment Date (पैसा जमा होने की तारीख)</label>
                         <input type="date" id="paidDate">
                     </div>
 
@@ -237,8 +251,9 @@
                                 <th>Name</th>
                                 <th>Join Date</th>
                                 <th>Month</th>
-                                <th>Cycle Date</th>
                                 <th>Fee (₹)</th>
+                                <th>Paid (₹)</th>
+                                <th>Due (₹)</th>
                                 <th>Status</th>
                                 <th>Payment Date</th>
                                 <th>Action</th>
@@ -261,11 +276,11 @@
                         <div class="stat-value" id="dashTotalStudents">0</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">कुल फ़ीस</div>
+                        <div class="stat-label">कुल तय फ़ीस</div>
                         <div class="stat-value" id="dashTotalFees">₹0</div>
                     </div>
                     <div class="stat-box" style="border-left-color: #2e7d32;">
-                        <div class="stat-label">जमा फ़ीस</div>
+                        <div class="stat-label">कुल जमा फ़ीस</div>
                         <div class="stat-value" style="color: #2e7d32;" id="dashPaidFees">₹0</div>
                     </div>
                     <div class="stat-box" style="border-left-color: #dc3545;">
@@ -290,8 +305,9 @@
                                 <th>Name</th>
                                 <th>Join Date</th>
                                 <th>Month</th>
-                                <th>Cycle Date</th>
                                 <th>Fee</th>
+                                <th>Paid Amount</th>
+                                <th>Remaining Due</th>
                                 <th>Status</th>
                                 <th>Payment Date</th>
                             </tr>
@@ -338,24 +354,39 @@
         }
 
         // Data Handling
-        let records = JSON.parse(localStorage.getItem('nb_records_v4')) || [];
+        let records = JSON.parse(localStorage.getItem('nb_records_v5')) || [];
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('paidDate').value = today;
         document.getElementById('joinDate').value = today;
 
-        function togglePaidDate() {
+        function togglePaymentFields() {
             const status = document.getElementById('stdStatus').value;
             const paidDateBox = document.getElementById('paidDateBox');
+            const partialBox = document.getElementById('partialBox');
+
             if (status === 'Due') {
                 paidDateBox.style.display = 'none';
+                partialBox.style.display = 'none';
+            } else if (status === 'Partial') {
+                paidDateBox.style.display = 'block';
+                partialBox.style.display = 'grid';
+                calculatePartial();
             } else {
                 paidDateBox.style.display = 'block';
+                partialBox.style.display = 'none';
             }
         }
 
+        function calculatePartial() {
+            const totalFee = Number(document.getElementById('stdFee').value) || 0;
+            const paid = Number(document.getElementById('paidAmount').value) || 0;
+            const rem = totalFee - paid;
+            document.getElementById('remainingDue').value = rem > 0 ? rem : 0;
+        }
+
         function saveAndRender() {
-            localStorage.setItem('nb_records_v4', JSON.stringify(records));
+            localStorage.setItem('nb_records_v5', JSON.stringify(records));
             renderRecords();
             updateDashboard();
             checkCycleAlerts();
@@ -371,15 +402,32 @@
         document.getElementById('studentForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const status = document.getElementById('stdStatus').value;
+            const totalFee = Number(document.getElementById('stdFee').value);
+            let paidAmt = 0;
+            let dueAmt = 0;
+
+            if(status === 'Paid') {
+                paidAmt = totalFee;
+                dueAmt = 0;
+            } else if(status === 'Due') {
+                paidAmt = 0;
+                dueAmt = totalFee;
+            } else if(status === 'Partial') {
+                paidAmt = Number(document.getElementById('paidAmount').value) || 0;
+                dueAmt = totalFee - paidAmt;
+            }
+
             const newRecord = {
                 id: Date.now(),
                 name: document.getElementById('stdName').value.trim(),
                 joinDate: document.getElementById('joinDate').value || '-',
                 month: document.getElementById('feeMonth').value,
                 cycleDate: Number(document.getElementById('cycleDate').value),
-                fee: Number(document.getElementById('stdFee').value),
+                fee: totalFee,
+                paidAmount: paidAmt,
+                remainingDue: dueAmt,
                 status: status,
-                paidDate: status === 'Paid' ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
+                paidDate: status !== 'Due' ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
             };
 
             records.push(newRecord);
@@ -387,7 +435,7 @@
             e.target.reset();
             document.getElementById('paidDate').value = today;
             document.getElementById('joinDate').value = today;
-            togglePaidDate();
+            togglePaymentFields();
             alert("Entry Saved Successfully!");
         });
 
@@ -398,18 +446,20 @@
             reportTbody.innerHTML = '';
 
             if(records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
-                reportTbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
+                reportTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">कोई डेटा उपलब्ध नहीं है।</td></tr>';
                 return;
             }
 
             records.forEach((r, index) => {
-                const badgeClass = r.status === 'Paid' ? 'badge-paid' : 'badge-due';
+                let badgeClass = 'badge-paid';
+                if(r.status === 'Due') badgeClass = 'badge-due';
+                if(r.status === 'Partial') badgeClass = 'badge-partial';
                 
                 let actionBtn = `<button type="button" class="btn-profile" onclick="openProfile('${r.name.replace(/'/g, "\\'")}')">👤 Profile</button> `;
                 
-                if(r.status === 'Due') {
-                    actionBtn += `<button type="button" class="btn-paid" onclick="markAsPaid(${index})">✓ Paid</button> `;
+                if(r.status === 'Due' || r.status === 'Partial') {
+                    actionBtn += `<button type="button" class="btn-paid" onclick="markAsPaid(${index})">✓ Clear Fee</button> `;
                 }
 
                 actionBtn += `<button type="button" style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="deleteRecord(${index})">X</button>`;
@@ -419,8 +469,9 @@
                         <td><b>${r.name}</b></td>
                         <td>${r.joinDate || '-'}</td>
                         <td>${r.month}</td>
-                        <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
+                        <td style="color:#2e7d32; font-weight:bold;">₹${r.paidAmount || 0}</td>
+                        <td style="color:#dc3545; font-weight:bold;">₹${r.remainingDue || 0}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
                         <td><b>${r.paidDate}</b></td>
                         <td style="white-space:nowrap;">${actionBtn}</td>
@@ -433,8 +484,9 @@
                         <td><b>${r.name}</b></td>
                         <td>${r.joinDate || '-'}</td>
                         <td>${r.month}</td>
-                        <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
+                        <td>₹${r.paidAmount || 0}</td>
+                        <td>₹${r.remainingDue || 0}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
                         <td><b>${r.paidDate}</b></td>
                     </tr>
@@ -443,12 +495,35 @@
         }
 
         function markAsPaid(index) {
-            const customDate = prompt("पैसा जमा करने की तारीख दर्ज करें (YYYY-MM-DD):", today);
-            if(customDate !== null && customDate.trim() !== "") {
-                records[index].status = 'Paid';
-                records[index].paidDate = customDate.trim();
-                saveAndRender();
-                alert("शुल्क जमा की तारीख अपडेट कर दी गई है!");
+            const currentRec = records[index];
+            const recDue = currentRec.remainingDue || currentRec.fee;
+            
+            const actionType = prompt(`छात्र: ${currentRec.name}\nकुल बाकी: ₹${recDue}\n\n1 = पूरा जमा (Paid)\n2 = और कुछ जमा (Partial Amount)`, "1");
+
+            if(actionType === "1") {
+                const customDate = prompt("पैसा जमा होने की तारीख दर्ज करें:", today);
+                if(customDate !== null) {
+                    records[index].status = 'Paid';
+                    records[index].paidAmount = currentRec.fee;
+                    records[index].remainingDue = 0;
+                    records[index].paidDate = customDate.trim() || today;
+                    saveAndRender();
+                    alert("फ़ीस पूरी तरह जमा कर दी गई है!");
+                }
+            } else if(actionType === "2") {
+                const addAmount = Number(prompt(`कितने रुपये जमा हुए? (बाकी ₹${recDue} में से):`));
+                if(addAmount && addAmount > 0) {
+                    const customDate = prompt("पैसा जमा होने की तारीख दर्ज करें:", today);
+                    const newPaidTotal = (currentRec.paidAmount || 0) + addAmount;
+                    const newDueTotal = currentRec.fee - newPaidTotal;
+
+                    records[index].paidAmount = newPaidTotal;
+                    records[index].remainingDue = newDueTotal > 0 ? newDueTotal : 0;
+                    records[index].status = newDueTotal <= 0 ? 'Paid' : 'Partial';
+                    records[index].paidDate = customDate ? customDate.trim() : today;
+                    saveAndRender();
+                    alert("आंशिक फ़ीस अपडेट हो गई है!");
+                }
             }
         }
 
@@ -465,15 +540,16 @@
             const alertList = document.getElementById('cycleAlertList');
             alertList.innerHTML = '';
 
-            const alertItems = records.filter(r => r.status === 'Due' && currentDay >= r.cycleDate);
+            const alertItems = records.filter(r => (r.status === 'Due' || r.status === 'Partial') && currentDay >= r.cycleDate);
 
             if(alertItems.length > 0) {
                 alertBox.style.display = 'block';
                 alertItems.forEach(item => {
+                    const dueAmt = item.remainingDue || item.fee;
                     alertList.innerHTML += `
                         <div class="alert-item">
-                            <span><b>${item.name}</b> - cycle date: <b>${item.cycleDate}th</b> (${item.month})</span>
-                            <span style="color:#dc3545; font-weight:bold;">₹${item.fee} Due</span>
+                            <span><b>${item.name}</b> - Cycle: <b>${item.cycleDate}th</b> (${item.month}) [Status: ${item.status}]</span>
+                            <span style="color:#dc3545; font-weight:bold;">₹${dueAmt} Remaining Due</span>
                         </div>
                     `;
                 });
@@ -495,15 +571,19 @@
             historyTbody.innerHTML = '';
 
             studentRecords.forEach(r => {
-                if(r.status === 'Paid') paidSum += r.fee;
-                else dueSum += r.fee;
+                paidSum += (r.paidAmount || 0);
+                dueSum += (r.remainingDue || 0);
 
-                const badgeClass = r.status === 'Paid' ? 'badge-paid' : 'badge-due';
+                let badgeClass = 'badge-paid';
+                if(r.status === 'Due') badgeClass = 'badge-due';
+                if(r.status === 'Partial') badgeClass = 'badge-partial';
+
                 historyTbody.innerHTML += `
                     <tr>
                         <td><b>${r.month}</b></td>
-                        <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
+                        <td style="color:#2e7d32; font-weight:bold;">₹${r.paidAmount || 0}</td>
+                        <td style="color:#dc3545; font-weight:bold;">₹${r.remainingDue || 0}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
                         <td><b>${r.paidDate}</b></td>
                     </tr>
@@ -535,8 +615,8 @@
 
             records.forEach(r => {
                 totalFees += r.fee;
-                if(r.status === 'Paid') paidFees += r.fee;
-                else dueFees += r.fee;
+                paidFees += (r.paidAmount || 0);
+                dueFees += (r.remainingDue || 0);
             });
 
             document.getElementById('dashTotalStudents').innerText = records.length;
