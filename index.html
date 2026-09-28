@@ -74,6 +74,7 @@
         .badge-paid { background: #d4edda; color: #155724; }
         .badge-due { background: #f8d7da; color: #721c24; }
         .badge-partial { background: #fff3cd; color: #856404; }
+        .badge-left { background: #e2e3e5; color: #383d41; }
         
         .unpaid-tag { background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 4px; }
         .cycle-tag { background: #ff9800; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 4px; }
@@ -120,6 +121,7 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>S.No.</th>
                             <th>Month</th>
                             <th>Total Fee</th>
                             <th>Paid Amount</th>
@@ -203,11 +205,12 @@
                             <input type="number" id="stdFee" placeholder="उदा. 200" required oninput="recalculateDueTotal()">
                         </div>
                         <div>
-                            <label>Status (Paid / Partial / Due)</label>
+                            <label>Status (Paid / Partial / Due / Left)</label>
                             <select id="stdStatus" onchange="togglePaymentFields()">
                                 <option value="Paid" selected>Paid (पूरा जमा)</option>
                                 <option value="Partial">Partial (कुछ जमा)</option>
                                 <option value="Due">Due (पूरा बकाया)</option>
+                                <option value="Left">Left Tuition (ट्यूशन छोड़ दिया - बकाया है)</option>
                             </select>
                         </div>
                     </div>
@@ -260,6 +263,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>S.No.</th>
                                 <th>Name</th>
                                 <th>Join Date</th>
                                 <th>Month</th>
@@ -312,6 +316,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>S.No.</th>
                                 <th>Name</th>
                                 <th>Join Date</th>
                                 <th>Month</th>
@@ -387,7 +392,7 @@
             const partialBox = document.getElementById('partialBox');
             const unpaidMonthsBox = document.getElementById('unpaidMonthsBox');
 
-            if (status === 'Due') {
+            if (status === 'Due' || status === 'Left') {
                 paidDateBox.style.display = 'none';
                 partialBox.style.display = 'none';
                 unpaidMonthsBox.style.display = 'grid';
@@ -437,7 +442,7 @@
             const status = document.getElementById('stdStatus').value;
             const monthlyFee = Number(document.getElementById('stdFee').value);
             const startMonth = document.getElementById('feeMonth').value;
-            const monthCount = (status === 'Due' || status === 'Partial') ? Number(document.getElementById('unpaidMonthCount').value) : 1;
+            const monthCount = (status === 'Due' || status === 'Partial' || status === 'Left') ? Number(document.getElementById('unpaidMonthCount').value) : 1;
             let startIdx = monthNamesList.indexOf(startMonth);
 
             for(let i = 0; i < monthCount; i++) {
@@ -454,8 +459,8 @@
                     fee: monthlyFee,
                     paidAmount: paidAmt,
                     remainingDue: dueAmt > 0 ? dueAmt : 0,
-                    status: (dueAmt <= 0) ? 'Paid' : (paidAmt > 0 ? 'Partial' : 'Due'),
-                    paidDate: status !== 'Due' ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
+                    status: (dueAmt <= 0) ? 'Paid' : status,
+                    paidDate: (status !== 'Due' && status !== 'Left') ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
                 });
             }
 
@@ -473,19 +478,24 @@
             tbody.innerHTML = ''; reportTbody.innerHTML = '';
 
             if(records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">कोई डेटा नहीं है।</td></tr>';
-                reportTbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">कोई डेटा नहीं है।</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">कोई डेटा नहीं है।</td></tr>';
+                reportTbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">कोई डेटा नहीं है।</td></tr>';
                 return;
             }
 
             records.forEach((r, index) => {
-                let badgeClass = r.status === 'Due' ? 'badge-due' : (r.status === 'Partial' ? 'badge-partial' : 'badge-paid');
+                let badgeClass = 'badge-paid';
+                if (r.status === 'Due') badgeClass = 'badge-due';
+                else if (r.status === 'Partial') badgeClass = 'badge-partial';
+                else if (r.status === 'Left') badgeClass = 'badge-left';
+
                 let actionBtn = `<button type="button" class="btn-profile" onclick="openProfile('${r.name.replace(/'/g, "\\'")}')">👤 Profile</button> `;
                 if(r.status !== 'Paid') actionBtn += `<button type="button" class="btn-paid" onclick="markAsPaid(${index})">✓ Clear</button> `;
                 actionBtn += `<button type="button" style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="deleteRecord(${index})">X</button>`;
 
                 tbody.innerHTML += `
                     <tr>
+                        <td><b>${index + 1}</b></td>
                         <td><b>${r.name}</b></td>
                         <td>${r.joinDate || '-'}</td>
                         <td>${r.month}</td>
@@ -499,6 +509,7 @@
 
                 reportTbody.innerHTML += `
                     <tr>
+                        <td><b>${index + 1}</b></td>
                         <td><b>${r.name}</b></td>
                         <td>${r.joinDate || '-'}</td>
                         <td>${r.month}</td>
@@ -549,11 +560,16 @@
                         months: [],
                         paidMonths: [],
                         totalDue: 0,
-                        monthlyFee: r.fee
+                        monthlyFee: r.fee,
+                        hasLeft: false
                     };
                 }
                 
-                if (r.status === 'Due' || r.status === 'Partial') {
+                if (r.status === 'Left') {
+                    studentMap[key].hasLeft = true;
+                }
+
+                if (r.status === 'Due' || r.status === 'Partial' || r.status === 'Left') {
                     studentMap[key].months.push(r.month);
                     studentMap[key].totalDue += (r.remainingDue || r.fee);
                 } else if(r.status === 'Paid') {
@@ -567,8 +583,8 @@
                 const st = studentMap[key];
                 let isCycleStarted = false;
                 
-                // Check Billing Cycle Status
-                if (currentDay >= st.cycleDate) {
+                // If student has NOT left, auto-check cycle date for current month
+                if (!st.hasLeft && currentDay >= st.cycleDate) {
                     const thisMonthName = monthNamesList[currentMonthIdx];
                     if (!st.paidMonths.includes(thisMonthName) && !st.months.includes(thisMonthName)) {
                         st.months.push(`${thisMonthName} (Cycle Started)`);
@@ -587,7 +603,7 @@
                             <span>
                                 <b>${st.name}</b> <span style="font-size:11px; color:#666;">(Cycle: ${st.cycleDate}th)</span>
                                 <span class="unpaid-tag">${monthCount} Month Pending</span>
-                                ${isCycleStarted ? '<span class="cycle-tag">New Month Started</span>' : ''}
+                                ${st.hasLeft ? '<span class="badge badge-left">Left Tuition</span>' : (isCycleStarted ? '<span class="cycle-tag">New Month Started</span>' : '')}
                                 <div style="color:#555; font-size:11px; margin-top:3px;">Pending Months: <b>${monthListStr}</b></div>
                             </span>
                             <span style="color:#dc3545; font-weight:bold; font-size:14px;">Total Due: ₹${st.totalDue}</span>
@@ -610,14 +626,19 @@
             const historyTbody = document.getElementById('profHistoryTbody');
             historyTbody.innerHTML = '';
 
-            studentRecords.forEach(r => {
+            studentRecords.forEach((r, idx) => {
                 paidSum += (r.paidAmount || 0);
                 dueSum += (r.remainingDue || 0);
                 if (r.status !== 'Paid') pendingMonths.push(`${r.month} (₹${r.remainingDue})`);
 
-                let badgeClass = r.status === 'Due' ? 'badge-due' : (r.status === 'Partial' ? 'badge-partial' : 'badge-paid');
+                let badgeClass = 'badge-paid';
+                if (r.status === 'Due') badgeClass = 'badge-due';
+                else if (r.status === 'Partial') badgeClass = 'badge-partial';
+                else if (r.status === 'Left') badgeClass = 'badge-left';
+
                 historyTbody.innerHTML += `
                     <tr>
+                        <td><b>${idx + 1}</b></td>
                         <td><b>${r.month}</b></td>
                         <td>₹${r.fee}</td>
                         <td style="color:#2e7d32; font-weight:bold;">₹${r.paidAmount || 0}</td>
