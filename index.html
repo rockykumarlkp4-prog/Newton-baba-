@@ -403,4 +403,100 @@
                         <td>${r.month}</td>
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
-                     
+                        <td><span class="badge ${badgeClass}">${r.status}</span></td>
+                        <td>${r.paidDate}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function markAsPaid(index) {
+            if(confirm("क्या फ़ीस जमा हो गई है?")) {
+                records[index].status = 'Paid';
+                records[index].paidDate = new Date().toISOString().split('T')[0];
+                saveAndRender();
+            }
+        }
+
+        function deleteRecord(index) {
+            if(confirm("हटाने की पुष्टि करें?")) {
+                records.splice(index, 1);
+                saveAndRender();
+            }
+        }
+
+        function openProfile(studentName) {
+            const studentRecords = records.filter(r => r.name.toLowerCase() === studentName.toLowerCase());
+            if(studentRecords.length === 0) return;
+
+            document.getElementById('profName').innerText = `👤 ${studentName}`;
+            
+            let paidSum = 0;
+            let dueSum = 0;
+            const historyTbody = document.getElementById('profHistoryTbody');
+            historyTbody.innerHTML = '';
+
+            studentRecords.forEach(r => {
+                if(r.status === 'Paid') paidSum += r.fee;
+                else dueSum += r.fee;
+
+                const badgeClass = r.status === 'Paid' ? 'badge-paid' : 'badge-due';
+                historyTbody.innerHTML += `
+                    <tr>
+                        <td><b>${r.month}</b></td>
+                        <td>${r.cycleDate}th Date</td>
+                        <td>₹${r.fee}</td>
+                        <td><span class="badge ${badgeClass}">${r.status}</span></td>
+                        <td>${r.paidDate}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('profPaid').innerText = `₹${paidSum}`;
+            document.getElementById('profDue').innerText = `₹${dueSum}`;
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        function filterRecords() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#recordsTbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function updateDashboard() {
+            let totalFees = 0;
+            let paidFees = 0;
+            let dueFees = 0;
+
+            records.forEach(r => {
+                totalFees += r.fee;
+                if(r.status === 'Paid') paidFees += r.fee;
+                else dueFees += r.fee;
+            });
+
+            document.getElementById('dashTotalStudents').innerText = records.length;
+            document.getElementById('dashTotalFees').innerText = `₹${totalFees}`;
+            document.getElementById('dashPaidFees').innerText = `₹${paidFees}`;
+            document.getElementById('dashDueFees').innerText = `₹${dueFees}`;
+        }
+
+        function exportToExcel() {
+            if(records.length === 0) return alert("डाउनलोड करने के लिए कोई डेटा नहीं है!");
+            const worksheet = XLSX.utils.json_to_sheet(records);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Fee Records");
+            XLSX.writeFile(workbook, "Fee_Management_Report.xlsx");
+        }
+
+        // Init
+        saveAndRender();
+    </script>
+</body>
+</html>
