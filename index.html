@@ -116,7 +116,7 @@
                 </div>
             </div>
 
-            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Month-Wise Payment History</h4>
+            <h4 style="margin:10px 0 5px 0; color:#1a73e8;">📅 Month-Wise Payment History & Paid Dates</h4>
             <div style="overflow-x:auto;">
                 <table>
                     <thead>
@@ -125,7 +125,7 @@
                             <th>Cycle</th>
                             <th>Fee</th>
                             <th>Status</th>
-                            <th>Paid Date</th>
+                            <th>Payment Date</th>
                         </tr>
                     </thead>
                     <tbody id="profHistoryTbody"></tbody>
@@ -214,7 +214,7 @@
                     </div>
 
                     <div id="paidDateBox">
-                        <label>Paid Date (पैसा कब जमा हुआ)</label>
+                        <label>Payment Date (पैसा किस तारीख को जमा हुआ)</label>
                         <input type="date" id="paidDate">
                     </div>
 
@@ -224,7 +224,7 @@
 
             <!-- SEARCH & EXCEL CARD -->
             <div class="card">
-                <div class="card-title">🔍 Records & Alert List</div>
+                <div class="card-title">🔍 Records & Paid History</div>
                 
                 <input type="text" id="searchInput" onkeyup="filterRecords()" placeholder="छात्र का नाम या महीना खोजें...">
                 
@@ -240,7 +240,7 @@
                                 <th>Cycle Date</th>
                                 <th>Fee (₹)</th>
                                 <th>Status</th>
-                                <th>Paid Date</th>
+                                <th>Payment Date</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -280,7 +280,7 @@
         <div id="reportTab" class="tab-content">
             <div class="card">
                 <div class="card-title">
-                    <span>📄 फ़ीस रिपोर्ट</span>
+                    <span>📄 फ़ीस व भुगतान रिपोर्ट</span>
                     <button type="button" style="float:right; padding:4px 8px;" onclick="window.print()">🖨️ Print</button>
                 </div>
                 <div style="overflow-x:auto;">
@@ -293,7 +293,7 @@
                                 <th>Cycle Date</th>
                                 <th>Fee</th>
                                 <th>Status</th>
-                                <th>Paid Date</th>
+                                <th>Payment Date</th>
                             </tr>
                         </thead>
                         <tbody id="reportTbody"></tbody>
@@ -379,7 +379,7 @@
                 cycleDate: Number(document.getElementById('cycleDate').value),
                 fee: Number(document.getElementById('stdFee').value),
                 status: status,
-                paidDate: status === 'Paid' ? (document.getElementById('paidDate').value || '-') : 'Pending / Unpaid'
+                paidDate: status === 'Paid' ? (document.getElementById('paidDate').value || today) : 'Pending / Unpaid'
             };
 
             records.push(newRecord);
@@ -422,7 +422,7 @@
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
-                        <td>${r.paidDate}</td>
+                        <td><b>${r.paidDate}</b></td>
                         <td style="white-space:nowrap;">${actionBtn}</td>
                     </tr>
                 `;
@@ -436,17 +436,19 @@
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
-                        <td>${r.paidDate}</td>
+                        <td><b>${r.paidDate}</b></td>
                     </tr>
                 `;
             });
         }
 
         function markAsPaid(index) {
-            if(confirm("क्या फ़ीस जमा हो गई है?")) {
+            const customDate = prompt("पैसा जमा करने की तारीख दर्ज करें (YYYY-MM-DD):", today);
+            if(customDate !== null && customDate.trim() !== "") {
                 records[index].status = 'Paid';
-                records[index].paidDate = new Date().toISOString().split('T')[0];
+                records[index].paidDate = customDate.trim();
                 saveAndRender();
+                alert("शुल्क जमा की तारीख अपडेट कर दी गई है!");
             }
         }
 
@@ -503,7 +505,7 @@
                         <td>${r.cycleDate}th Date</td>
                         <td>₹${r.fee}</td>
                         <td><span class="badge ${badgeClass}">${r.status}</span></td>
-                        <td>${r.paidDate}</td>
+                        <td><b>${r.paidDate}</b></td>
                     </tr>
                 `;
             });
