@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEWTON BABA - Fee Management System</title>
+    <title>NEWTON BABA - Complete Fee Management System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -11,22 +11,12 @@
         
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center;
-            align-items: center; z-index: 9999;
+            background: rgba(0, 0, 0, 0.88); display: flex; justify-content: center;
+            align-items: center; z-index: 99999;
         }
         .login-card {
             background: white; padding: 25px; border-radius: 12px; width: 90%;
-            max-width: 360px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        #profileModal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; justify-content: center;
-            align-items: center; z-index: 999;
-        }
-        .profile-card {
-            background: white; padding: 20px; border-radius: 12px; width: 92%;
-            max-width: 540px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            max-width: 360px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .header-card { background: #fff; padding: 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
@@ -50,7 +40,7 @@
         input, select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; background: #fff; }
         
         .btn-submit { background: #1a73e8; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; width: 100%; margin-top: 15px; }
-        .btn-excel { background: #2e7d32; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-excel { background: #2e7d32; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-bottom: 10px; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
@@ -66,55 +56,59 @@
 </head>
 <body>
 
-    <!-- Login System -->
+    <!-- 1. LOGIN OVERLAY -->
     <div id="loginOverlay">
         <div class="login-card">
             <h2 style="color:#1a73e8; margin-top:0;">🔒 Admin Login</h2>
-            <input type="password" id="loginPassword" placeholder="Enter Password">
-            <button type="button" class="btn-submit" onclick="checkLogin()">Login</button>
+            <form onsubmit="checkLogin(event)">
+                <input type="password" id="loginPassword" placeholder="Enter Password" required style="margin-bottom: 12px;">
+                <button type="submit" class="btn-submit">Login</button>
+            </form>
             <p style="font-size:11px; color:#888; margin-top:12px;">Default Password: <b>1234</b></p>
         </div>
     </div>
 
-    <!-- Main App -->
+    <!-- MAIN APP CONTENT -->
     <div id="appContent">
         <div class="header-card">
             <h1 class="brand-title">NEWTON BABA</h1>
             <div class="brand-sub">Fee Management System</div>
             
             <div class="top-btns">
-                <button type="button" class="btn-orange" onclick="changePassword()">🔑 Password</button>
+                <button type="button" class="btn-orange" onclick="changePassword()">🔑 Change Password</button>
                 <button type="button" class="btn-red" onclick="logout()">🔒 Logout</button>
             </div>
 
+            <!-- TABS -->
             <div class="nav-tabs">
-                <button type="button" class="tab-btn active" onclick="switchTab('entryTab', this)">➕ Entry / Record</button>
-                <button type="button" class="tab-btn" onclick="switchTab('dueTab', this)">⚠️️ Due List (बकाया)</button>
+                <button type="button" class="tab-btn active" onclick="switchTab('entryTab', this)">➕ Entry / All Data</button>
+                <button type="button" class="tab-btn" onclick="switchTab('dueTab', this)">⚠️ Due List (बकाया)</button>
+                <button type="button" class="tab-btn" onclick="switchTab('paidTab', this)">✅ Paid List (जमा)</button>
             </div>
         </div>
 
-        <!-- Entry Tab -->
+        <!-- 2. ENTRY & ALL DATA TAB -->
         <div id="entryTab" class="tab-content active">
             <div class="card">
                 <div class="card-title">➕ New Fee Entry</div>
                 <form id="studentForm">
                     <div class="grid-2">
                         <div>
-                            <label>Student Name</label>
-                            <input type="text" id="stdName" required>
+                            <label>Student Name (छात्र का नाम)</label>
+                            <input type="text" id="stdName" required placeholder="उदा. विक्की यादव">
                         </div>
                         <div>
-                            <label>Total Fee</label>
-                            <input type="number" id="feeAmount" required>
+                            <label>Total Fee (कुल फ़ीस)</label>
+                            <input type="number" id="feeAmount" required placeholder="उदा. 500">
                         </div>
                     </div>
                     <div class="grid-2">
                         <div>
-                            <label>Paid Amount</label>
-                            <input type="number" id="paidAmount" required>
+                            <label>Paid Amount (जमा राशि)</label>
+                            <input type="number" id="paidAmount" required placeholder="उदा. 500 या 0">
                         </div>
                         <div>
-                            <label>Month</label>
+                            <label>Month (महीना)</label>
                             <select id="feeMonth">
                                 <option value="January">January</option>
                                 <option value="February">February</option>
@@ -136,8 +130,8 @@
             </div>
 
             <div class="card">
-                <div class="card-title">📋 All Records</div>
-                <input type="text" id="searchInput" placeholder="Search by name..." onkeyup="searchTable('recordsTable')">
+                <div class="card-title">📋 All Records (पूरा डाटा)</div>
+                <input type="text" id="searchInput" placeholder="Search by name..." onkeyup="searchTable('recordsTable', 'searchInput')">
                 <div style="overflow-x:auto;">
                     <table id="recordsTable">
                         <thead>
@@ -156,11 +150,11 @@
             </div>
         </div>
 
-        <!-- Due List Tab -->
+        <!-- 3. DUE LIST TAB -->
         <div id="dueTab" class="tab-content">
             <div class="card">
-                <div class="card-title" style="color:#dc3545;">⚠️ Due List (जिनका फ़ीस बाकी है)</div>
-                <button type="button" class="btn-excel" onclick="exportDueList()">📊 Export Due List to Excel</button>
+                <div class="card-title" style="color:#dc3545;">⚠️ Due List (जिनका फ़ीस बकाया है)</div>
+                <button type="button" class="btn-excel" onclick="exportExcel('Due')">📊 Export Due List to Excel</button>
                 <div style="overflow-x:auto;">
                     <table>
                         <thead>
@@ -179,14 +173,38 @@
             </div>
         </div>
 
+        <!-- 4. PAID LIST TAB -->
+        <div id="paidTab" class="tab-content">
+            <div class="card">
+                <div class="card-title" style="color:#2e7d32;">✅ Paid List (जिनका फ़ीस पूरा जमा है)</div>
+                <button type="button" class="btn-excel" onclick="exportExcel('Paid')">📊 Export Paid List to Excel</button>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Month</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paidTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
         let db = JSON.parse(localStorage.getItem('nb_records')) || [];
         let adminPass = localStorage.getItem('nb_pass') || '1234';
 
-        function checkLogin() {
-            if(document.getElementById('loginPassword').value === adminPass) {
+        function checkLogin(e) {
+            if(e) e.preventDefault();
+            let passInput = document.getElementById('loginPassword').value;
+            if(passInput === adminPass) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 renderData();
             } else {
@@ -203,7 +221,7 @@
             if(p) {
                 localStorage.setItem('nb_pass', p);
                 adminPass = p;
-                alert('पासवर्ड बदल गया!');
+                alert('पासवर्ड सफलतापूर्वक बदल गया!');
             }
         }
 
@@ -215,20 +233,20 @@
         }
 
         function addRecord() {
-            let name = document.getElementById('stdName').value;
+            let name = document.getElementById('stdName').value.trim();
             let total = parseFloat(document.getElementById('feeAmount').value) || 0;
             let paid = parseFloat(document.getElementById('paidAmount').value) || 0;
             let month = document.getElementById('feeMonth').value;
 
             if(!name || total <= 0) {
-                alert('कृपया सही जानकारी भरें!');
+                alert('कृपया नाम और सही फ़ीस दर्ज करें!');
                 return;
             }
 
             let due = total - paid;
             let status = due <= 0 ? 'Paid' : 'Due';
 
-            db.push({ name, month, total, paid, due, status });
+            db.push({ name, month, total, paid, due: due < 0 ? 0 : due, status });
             localStorage.setItem('nb_records', JSON.stringify(db));
             
             document.getElementById('studentForm').reset();
@@ -239,12 +257,17 @@
         function renderData() {
             let mainTbody = document.getElementById('recordsTbody');
             let dueTbody = document.getElementById('dueTbody');
+            let paidTbody = document.getElementById('paidTbody');
             
             mainTbody.innerHTML = '';
             dueTbody.innerHTML = '';
+            paidTbody.innerHTML = '';
 
             db.forEach((item) => {
-                let badge = item.due <= 0 ? '<span class="badge badge-paid">Paid</span>' : '<span class="badge badge-due">Due</span>';
+                let isPaid = item.due <= 0;
+                let badge = isPaid 
+                    ? '<span class="badge badge-paid">Paid</span>' 
+                    : '<span class="badge badge-due">Due</span>';
                 
                 let row = `<tr>
                     <td><b>${item.name}</b></td>
@@ -255,32 +278,52 @@
                     <td>${badge}</td>
                 </tr>`;
 
+                // All Records में दिखेगा
                 mainTbody.innerHTML += row;
 
+                // Due List में ऑटोमैटिक फ़िल्टर
                 if(item.due > 0) {
                     dueTbody.innerHTML += row;
+                }
+
+                // Paid List में ऑटोमैटिक फ़िल्टर
+                if(isPaid) {
+                    paidTbody.innerHTML += `<tr>
+                        <td><b>${item.name}</b></td>
+                        <td>${item.month}</td>
+                        <td>₹${item.total}</td>
+                        <td>₹${item.paid}</td>
+                        <td>${badge}</td>
+                    </tr>`;
                 }
             });
         }
 
-        function searchTable(tableId) {
-            let input = document.getElementById('searchInput').value.toLowerCase();
+        function searchTable(tableId, inputId) {
+            let input = document.getElementById(inputId).value.toLowerCase();
             let rows = document.querySelectorAll(`#${tableId} tbody tr`);
             rows.forEach(r => {
                 r.style.display = r.innerText.toLowerCase().includes(input) ? '' : 'none';
             });
         }
 
-        function exportDueList() {
-            let dueData = db.filter(item => item.due > 0);
-            if(dueData.length === 0) {
-                alert('कोई Due रिकॉर्ड नहीं है!');
+        function exportExcel(type) {
+            let exportData = [];
+            if(type === 'Due') {
+                exportData = db.filter(item => item.due > 0);
+            } else if(type === 'Paid') {
+                exportData = db.filter(item => item.due <= 0);
+            }
+
+            if(exportData.length === 0) {
+                alert(`कोई ${type} रिकॉर्ड उपलब्ध नहीं है!`);
                 return;
             }
-            let ws = XLSX.utils.json_to_sheet(dueData);
+
+            let ws = XLSX.utils.json_to_sheet(exportData);
             let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Due_List");
-            XLSX.writeFile(wb, "Newton_Baba_Due_List.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, `${type}_List`);
+            XLSX.writeFile(wb, `Newton_Baba_${type}_List.xlsx`);
         }
     </script>
 </body>
